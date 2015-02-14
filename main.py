@@ -8,7 +8,7 @@ import pycurl, cStringIO, base64, urllib3, urllib	#for all
 #             Options            #
 ##################################
 
-host = "192.168.0.254"		# router host / ip
+host = "192.168.0.22"		# router host / ip
 login = "root"
 password = "hackmeplease"
 maxTries = 3			# attempts before we abort
@@ -21,11 +21,11 @@ beVerbose = False		# run curl verbosely
 ##################################
 
 def set_psk(id):	#Necessary:IntervalWpa
-	d={"pskSecret":id,"pskSecOpt":"3","pskCipher":"1","interval":"86400", "sectype":"3","intervalWpa":"86400"}
+	d={"pskSecret":id,"pskSecOpt":"3","pskCipher":"1","interval":"86400", "sectype":"3","intervalWpa":"86400","broadcast":"2"}
 	sendForm("WlanSecurity", d)
 
 def set_ssid(id):
-	sendForm("WlanNetwork", {"ssid1":id})
+	sendForm("WlanNetwork", {"ssid1":id,"broadcast":"2", "ap":"1"})
 
 def set_opmode(id):
 	opmodes = ["ap", "router", "repeater", "bridge", "client"]
@@ -98,7 +98,7 @@ def attemptReset():
 def actions():
 	set_ssid(rnd())
 	set_psk(rnd())
-	set_opmode("bridge")
+	set_opmode("ap")
 	set_host("192.168.0.22")
 	reboot()
 
