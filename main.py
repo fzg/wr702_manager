@@ -31,9 +31,12 @@ def set_opmode(id):
 	opmodes = ["ap", "router", "repeater", "bridge", "client"]
 	sendForm("WlanApMode", {"opmode":opmodes.index(id)+1})
 
-def set_host(h):
-	d={"porttype":"1","lanip":"192.168.0.254","lanmask":"2","inputMask":"255.255.255.0"}
+#porttype:1 static ip, 2 smart ip
+def set_host(h, nm="255.255.255.0", p="static"):
+	porttypes= ["static", "smart"]
+	d={"porttype":porttypes.index(p)+1,"lanip":h,"lanmask":"2","inputMask":nm}
 	sendForm("NetworkCfg", d)
+
 def reboot():
 	sendForm("SysReboot", {"Reboot":"Reboot"})
 
@@ -66,8 +69,8 @@ def do_get(url, dat):
         c.setopt(pycurl.REFERER, url)
         c.setopt(pycurl.WRITEFUNCTION, response.write)
         c.perform()
-        http_code = int(c.getinfo(pycurl.HTTP_CODE))
-	if int(http_code) == 401: raise ValueError(str(http_code))
+        r = int(c.getinfo(pycurl.HTTP_CODE))
+	if r == 401 or r == 502: raise ValueError(str(r))
 
 #prepare url and flattens parameters
 def sendForm(ur, d):
@@ -96,6 +99,7 @@ def actions():
 	set_ssid(rnd())
 	set_psk(rnd())
 	set_opmode("bridge")
+	set_host("192.168.0.22")
 	reboot()
 
 def main():
@@ -103,7 +107,10 @@ def main():
         while True:
 		try:
 			actions()
-                except ValueError:
+                except ValueError as e:
+			if int(e.args[0]) == 502:
+				print "-[!]->No route to host"
+				return
 			try:
 				tries += 1
 				attemptReset()
