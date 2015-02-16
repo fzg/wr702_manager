@@ -10,12 +10,13 @@
 
 #define S(x) (strlen(x))
 
-
-extern char 	 gV, *gPass, *gUser;
+extern char 	gV, *gPass, *gUser;
 char 		*gAddr, *gAuth;
 
 struct in_addr *makeAddr(char *ip) {
 	static struct in_addr x;
+	if (gV) printf("Making address from %s\n", ip);
+
 	inet_aton(ip, &x);
 	gAddr = ip;
 	return &x;
@@ -39,10 +40,18 @@ char *encodeAuthString() {
 int contact(struct in_addr *x) {
 	static struct sockaddr_in ad;
 
+	int err, s;
+	memset(&ad, 0, sizeof(ad));
 	ad.sin_family = AF_INET;
         ad.sin_port = htons(80);
 	memcpy(&(ad.sin_addr.s_addr), &x, sizeof(struct in_addr));
-	return socket(AF_INET, SOCK_STREAM, 0);
+	if ((err = s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+		perror("socket");
+	else {
+		if ((err = connect(s, (struct sockaddr *)&ad, sizeof(struct in_addr))))
+			perror("connect");
+	}
+	return s;
 }
 
 char *makeReq(const char *page, const char *req, size_t *sz) {
