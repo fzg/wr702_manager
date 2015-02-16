@@ -35,13 +35,13 @@ int work(const int s) {
 }
 
 int main(char c, const char **v) {
-	int err, s;
+	int s, err = EXIT_FAILURE;
 	static char addr[] = "192.168.0.254";
 
 	gV = (c > 1 && v[1][0] == 'v');
 	if (gV) printf("wr_tool: %s\n", addr);
 	if ((s = contact(makeAddr(addr))) == -1) {	// get socket
-		strerror("contact");
+		err = (int)strerror("contact");
 	} else {
 		if (gV) printf("Socket fd: %d\n", s);
 		err = work(s);				// work

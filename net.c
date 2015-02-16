@@ -47,7 +47,6 @@ int contact(struct in_addr *x) {
         hints.ai_protocol = IPPROTO_TCP;
         hints.ai_flags = AI_ADDRCONFIG;
         if (err = getaddrinfo(gAddr, "80", &hints, &res)) perror("getaddrinfo");
-	memcpy(&(ad.sin_addr.s_addr), &x, sizeof(struct in_addr));
 	if ((err = s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1)
 		perror("socket");
 	else {
