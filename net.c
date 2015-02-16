@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <string.h>
-
+#include <netdb.h>
 #include "b64.h"
 
 #define S(x) (strlen(x))
@@ -15,8 +15,8 @@ char 		*gAddr, *gAuth;
 
 struct in_addr *makeAddr(char *ip) {
 	static struct in_addr x;
-	if (gV) printf("Making address from %s\n", ip);
 
+	if (gV) printf("Making address from %s\n", ip);
 	inet_aton(ip, &x);
 	gAddr = ip;
 	return &x;
@@ -38,17 +38,20 @@ char *encodeAuthString() {
 };
 
 int contact(struct in_addr *x) {
-	static struct sockaddr_in ad;
+        struct addrinfo hints, *res;
+        int err, s;
 
-	int err, s;
-	memset(&ad, 0, sizeof(ad));
-	ad.sin_family = AF_INET;
-        ad.sin_port = htons(80);
+        memset(&hints, 0, sizeof(hints));
+	res = NULL;
+        hints.ai_family=AF_INET;
+        hints.ai_protocol = IPPROTO_TCP;
+        hints.ai_flags = AI_ADDRCONFIG;
+        if (err = getaddrinfo(gAddr, "80", &hints, &res)) perror("getaddrinfo");
 	memcpy(&(ad.sin_addr.s_addr), &x, sizeof(struct in_addr));
-	if ((err = s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+	if ((err = s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1)
 		perror("socket");
 	else {
-		if ((err = connect(s, (struct sockaddr *)&ad, sizeof(struct in_addr))))
+		if ((err = connect(s, res->ai_addr, res->ai_addrlen)))
 			perror("connect");
 	}
 	return s;
@@ -75,11 +78,10 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	if (gV) printf("%s\n-END-\n", beg);
 	return beg;
 }
-/*
-TODO:
+
+/*TODO:
 		Ecouter la reponse
-		Returns the HTTP Status code
-*/
+		Returns the HTTP Status code */
 
 unsigned short sendReq(short socket, const char *buf, size_t s) {
 		static short err = 200;

@@ -8,7 +8,6 @@
 |*|	testing
 \*/
 
-
 /*
 	Do we take parameters? if so how? pass along argv[] and chain funcs and their args?
 	  Ex: #./prg ip 8.8.8.8 lg Admin pw hackme sm bridge sip 192.168.1.23 rb
@@ -40,9 +39,7 @@ int main(char c, const char **v) {
 	static char addr[] = "192.168.0.254";
 
 	gV = (c > 1 && v[1][0] == 'v');
-	if (gV) {
-		printf("wr_tool: %s\n", addr);
-	}
+	if (gV) printf("wr_tool: %s\n", addr);
 	if ((s = contact(makeAddr(addr))) == -1) {	// get socket
 		strerror("contact");
 	} else {
