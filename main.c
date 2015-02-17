@@ -38,8 +38,7 @@ int main(char c, const char **v) {
 	int s, err = EXIT_FAILURE;
 	static char addr[] = "192.168.0.254";
 
-	gV = (c > 1 && v[1][0] == 'v');
-	if (gV) printf("wr_tool: %s\n", addr);
+	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
 	if ((s = contact(makeAddr(addr))) == -1) {	// get socket
 		err = (int)strerror("contact");
 	} else {

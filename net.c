@@ -53,44 +53,70 @@ int contact(struct in_addr *x) {
 		if ((err = connect(s, res->ai_addr, res->ai_addrlen)))
 			perror("connect");
 	}
+	freeaddrinfo(res);
 	return s;
 }
 
 char *makeReq(const char *page, const char *req, size_t *sz) {
-	const static char bp0[] = "GET http://", bp1[]="/userRpm/", bpst[] = "Rpm.htm?";
-	const static char rp0[] = "\r\nReferer: https://", rp1[] = "/";
-	const static char ap0[] ="\r\nAuthentification: Basic ", ap1[] = "\r\n\r\n\r\n";
-
-	char *p, *beg;
+	const static char bp0[] = "GET http://", bp1[]="/userRpm/", bpst[] = "Rpm.htm";
+        const static char ap0[] ="\nAuthorization: Basic ", el[] = "\n";
+	const static char rp0[] = "User-Agent: Mozilla/5.0\nAccept: text/html\r\nAccept-Language: en;q=0.7\nReferer: http://";
+	const static char ua[] = "\nConnection: keep-alive\n\n";//Cache-Control: max-age=0\r\n\r\n\r\n";
+	const static char host[] = " HTTP/1.1\nHost: ";
+	char *p;
 
 	gAuth = encodeAuthString();
 	if (gV) printf("Encoded to: %s\n", gAuth);
-	*sz = S(gAddr) + S(bp0) + S(bp1) + S(bpst) + S(page) + S(req) + S(rp0)+ S(gAddr)+ S(rp1)+ S(ap0)+ S(gAuth)+ S(ap1) + 1;
-	if (!(p = beg = malloc(*sz))) {
-		puts("Couldn't malloc request"); exit(1);
-	}
+	*sz = S(bp0)+S(gAddr)+S(bp1)+S(page)+S(bpst)+S(req)+S(host)+S(gAddr)+S(el)+S(rp0)+S(gAddr)+S(bp1)+S(page)+S(bpst)+S(ap0)
+		+S(gAuth)+S(ua)+ 2;
+	if (!(p = malloc(*sz))) {puts("Couldn't malloc request"); exit(1);}
 	if (gV) printf("Allocated %i@%x\n",*sz,p);
-/* GET path */	strcpy(p, bp0); strcpy(p+=S(bp0), gAddr); strcpy(p+=S(gAddr),bp1);
-/*  request */	strcpy(p+=S(bp1), page); strcpy(p+=S(page), bpst); strcpy(p+=S(bpst), req);
-/*  Referer */	strcpy(p+=S(req), rp0); strcpy(p+=S(rp0), gAddr); strcpy(p+=S(gAddr), rp1);
-/*   Auth   */	strcpy(p+=S(rp1), ap0); strcpy(p+=S(ap0), gAuth); strcpy(p+=S(gAuth), ap1);
-	if (gV) printf("%s\n-END-\n", beg);
-	return beg;
+	snprintf(p, *sz, "%s%s%s%s%s?%s%s%s%s%s%s%s%s%s%s%s%s", bp0, gAddr, bp1, page, bpst, req,
+		host, gAddr, el, rp0, gAddr, bp1, page, bpst, ap0, gAuth, ua);
+	if (gV) printf("\n-BEG-\n%s-END-\n\n", p);
+	return p;
 }
 
 /*TODO:
 		Ecouter la reponse
 		Returns the HTTP Status code */
+#define BL	4096
 
-unsigned short sendReq(short socket, const char *buf, size_t s) {
+
+unsigned short bufToCode(const char buf[]) {
+	static char b[4];
+	static unsigned short r;
+
+	b[3] = 0;
+	memcpy(b, &buf[9], 3);
+	r = atoi(b);
+	if (gV) printf("Got back code %i\n", r);
+	return r;
+}
+
+unsigned short sendReq(short socket, const char *buf, size_t s, const char **ob) {
 		static short err = 200;
+		static char obuf[BL];
+
+		*ob = &obuf[0];
 		if ((err = send(socket, buf, s, MSG_NOSIGNAL)) == -1) {
-			perror("sendreq");
+			perror("send");
+		}
+		if (gV) printf("sent %i \n", err);
+		if ((err = recv(socket, &obuf[0], BL, MSG_WAITALL)) < 0) {
+			perror("recv");
+		}
+		else {
+			if (gV) printf("recd %i \n", err);
+			if (gV > 1) puts(obuf);
+			err = bufToCode(obuf);
 		}
 		return err;
 }
 
 void cleanup(int s) {
+  if (gV) puts("cleanup...");
   base64_cleanup();
   close(s);
+  free(gAuth);
 }
