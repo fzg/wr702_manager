@@ -59,10 +59,10 @@ int contact(struct in_addr *x) {
 
 char *makeReq(const char *page, const char *req, size_t *sz) {
 	const static char bp0[] = "GET http://", bp1[]="/userRpm/", bpst[] = "Rpm.htm";
-        const static char ap0[] ="\nAuthorization: Basic ", el[] = "\n";
-	const static char rp0[] = "User-Agent: Mozilla/5.0\nAccept: text/html\r\nAccept-Language: en;q=0.7\nReferer: http://";
-	const static char ua[] = "\nConnection: keep-alive\n\n";//Cache-Control: max-age=0\r\n\r\n\r\n";
-	const static char host[] = " HTTP/1.1\nHost: ";
+        const static char ap0[] ="\r\nAuthorization: Basic ", el[] = "\r\n";
+	const static char rp0[] = "User-Agent: Mozilla/5.0\r\nAccept: text/html\r\nAccept-Language: en;q=0.7\r\nReferer: http://";
+	const static char ua[] = "\r\nConnection: keep-alive\r\n\r\n\r\n";//Cache-Control: max-age=0\r\n\r\n\r\n";
+	const static char host[] = " HTTP/1.1\r\nHost: ";
 	char *p;
 
 	gAuth = encodeAuthString();
@@ -103,7 +103,7 @@ unsigned short sendReq(short socket, const char *buf, size_t s, char **ob) {
 			perror("send");
 		}
 		if (gV) printf("sent %i \n", err);
-		if ((err = recv(socket, *ob, BL, MSG_WAITALL)) < 0) {
+		if ((err = recv(socket, obuf, BL, MSG_WAITALL)) < 0) {
 			perror("recv");
 		}
 		else {

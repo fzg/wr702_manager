@@ -30,7 +30,6 @@ int work(const int s) {
 	char *r, *ob;
 	r = makeReq("SysReboot", "Reboot=Reboot", &sz);
 	err = sendReq(s, r, sz, &ob);
-	err = sendReq(s, r, sz, &ob);
 	free(r);
 	return err;
 }
