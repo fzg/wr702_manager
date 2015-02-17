@@ -43,7 +43,7 @@ int contact(struct in_addr *x) {
 
         memset(&hints, 0, sizeof(hints));
 	res = NULL;
-        hints.ai_family=AF_INET;
+        hints.ai_family = AF_INET;
         hints.ai_protocol = IPPROTO_TCP;
         hints.ai_flags = AI_ADDRCONFIG;
         if (err = getaddrinfo(gAddr, "80", &hints, &res)) perror("getaddrinfo");
@@ -70,6 +70,7 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	*sz = S(bp0)+S(gAddr)+S(bp1)+S(page)+S(bpst)+S(req)+S(host)+S(gAddr)+S(el)+S(rp0)+S(gAddr)+S(bp1)+S(page)+S(bpst)+S(ap0)
 		+S(gAuth)+S(ua)+ 2;
 	if (!(p = malloc(*sz))) {puts("Couldn't malloc request"); exit(1);}
+	memset(p, 0, *sz);
 	if (gV) printf("Allocated %i@%x\n",*sz,p);
 	snprintf(p, *sz, "%s%s%s%s%s?%s%s%s%s%s%s%s%s%s%s%s%s", bp0, gAddr, bp1, page, bpst, req,
 		host, gAddr, el, rp0, gAddr, bp1, page, bpst, ap0, gAuth, ua);
@@ -77,12 +78,7 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	return p;
 }
 
-/*TODO:
-		Ecouter la reponse
-		Returns the HTTP Status code */
 #define BL	4096
-
-
 unsigned short bufToCode(const char buf[]) {
 	static char b[4];
 	static unsigned short r;
@@ -94,16 +90,20 @@ unsigned short bufToCode(const char buf[]) {
 	return r;
 }
 
-unsigned short sendReq(short socket, const char *buf, size_t s, const char **ob) {
+unsigned short sendReq(short socket, const char *buf, size_t s, char **ob) {
 		static short err = 200;
-		static char obuf[BL];
+		static char *obuf = NULL;
 
-		*ob = &obuf[0];
+		if (!obuf && (!(obuf = malloc(BL)))) {
+			perror("obuf malloc"); exit(EXIT_FAILURE);
+		}
+
+		*ob = obuf;
 		if ((err = send(socket, buf, s, MSG_NOSIGNAL)) == -1) {
 			perror("send");
 		}
 		if (gV) printf("sent %i \n", err);
-		if ((err = recv(socket, &obuf[0], BL, MSG_WAITALL)) < 0) {
+		if ((err = recv(socket, *ob, BL, MSG_WAITALL)) < 0) {
 			perror("recv");
 		}
 		else {

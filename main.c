@@ -27,9 +27,10 @@ char *gPass = "admin";
 int work(const int s) {
 	int err;
 	size_t sz;
-	char *r;
+	char *r, *ob;
 	r = makeReq("SysReboot", "Reboot=Reboot", &sz);
-	err = sendReq(s, r, sz);
+	err = sendReq(s, r, sz, &ob);
+	err = sendReq(s, r, sz, &ob);
 	free(r);
 	return err;
 }

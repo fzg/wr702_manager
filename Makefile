@@ -8,7 +8,7 @@ CC	 := $(ARCH)-gcc
 STRIP	 := $(ARCH)-strip
 PRG	 := wrdo_$(ARCH)
 SRC	 := ./*.c
-CFLAGS   := -g -O0
+CFLAGS   := -g -Os
 #CFLAGS   := -Os
 
 $(PRG)	:
