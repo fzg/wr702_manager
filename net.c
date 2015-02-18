@@ -10,7 +10,7 @@
 
 #define S(x) (strlen(x))
 
-extern char 	gV, *gPass, *gUser;
+extern char 	gV, *gPass, *gUser, *gOb;
 char 		*gAddr, *gAuth;
 
 struct in_addr *makeAddr(char *ip) {
@@ -75,11 +75,12 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	snprintf(p, *sz, "%s%s%s%s%s?%s%s%s%s%s%s%s%s%s%s%s%s", bp0, gAddr, bp1, page, bpst, req,
 		host, gAddr, el, rp0, gAddr, bp1, page, bpst, ap0, gAuth, ua);
 	if (gV) printf("\n-BEG-\n%s-END-\n\n", p);
+	free(gAuth);
 	return p;
 }
 
-#define BL	4096
-unsigned short bufToCode(const char buf[]) {
+#define BL	4096*16
+	unsigned short bufToCode(const char buf[]) {
 	static char b[4];
 	static unsigned short r;
 
@@ -118,5 +119,6 @@ void cleanup(int s) {
   if (gV) puts("cleanup...");
   base64_cleanup();
   close(s);
-  free(gAuth);
+//  free(gAuth);
+  free(gOb);
 }

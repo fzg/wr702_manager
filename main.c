@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "net.h"
-
+#include "ops.h"
 /*\ TODO:
 |*|	command dispatcher
 |*|	commands
@@ -26,11 +26,14 @@ char *gPass = "admin";
 
 int work(const int s) {
 	int err;
-	size_t sz;
+	/*size_t sz;
 	char *r, *ob;
 	r = makeReq("SysReboot", "Reboot=Reboot", &sz);
 	err = sendReq(s, r, sz, &ob);
-	free(r);
+	free(r);*/
+	err = oSsid(s, "caca");
+	err = oPsk(s, "proutcapue");
+	err = oReboot(s);
 	return err;
 }
 
@@ -40,7 +43,7 @@ int main(char c, const char **v) {
 
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
 	if ((s = contact(makeAddr(addr))) == -1) {	// get socket
-		err = (int)strerror("contact");
+		err = EXIT_FAILURE; perror("contact");
 	} else {
 		if (gV) printf("Socket fd: %d\n", s);
 		err = work(s);				// work
