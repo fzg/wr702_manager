@@ -31,9 +31,13 @@ int work(const int s) {
 	r = makeReq("SysReboot", "Reboot=Reboot", &sz);
 	err = sendReq(s, r, sz, &ob);
 	free(r);*/
-	err = oSsid(s, "caca");
-	err = oPsk(s, "proutcapue");
-	err = oReboot(s);
+	const char *it;
+//	err = oSsid(s, "caca");
+//	err = oPsk(s, "proutcapue");
+//	err = oReboot(s);
+	err = oSurvey(s, &it);
+//	puts(it);
+	free((char*)it);
 	return err;
 }
 

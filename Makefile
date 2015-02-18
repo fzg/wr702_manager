@@ -1,8 +1,8 @@
 #fzn - 2015
 
-#ARCH	 := x86_64-linux-gnu
+ARCH	 := x86_64-linux-gnu
 #ARCH	 := avr #No sys/types no netinet/net
-ARCH	 := mips-linux-gnu
+#ARCH	 := mips-linux-gnu
 
 CC	 := $(ARCH)-gcc
 STRIP	 := $(ARCH)-strip
