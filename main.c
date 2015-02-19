@@ -21,29 +21,32 @@
 */
 
 char gV = 0;	// verbose
-char *gUser = "admin";
-char *gPass = "admin";
+char *gUser = "toor";
+char *gPass = "root";
+extern char *gAuth;
 
-int work(const int s) {
+int work(int s) {
 	int err;
-	/*size_t sz;
-	char *r, *ob;
-	r = makeReq("SysReboot", "Reboot=Reboot", &sz);
-	err = sendReq(s, r, sz, &ob);
-	free(r);*/
 	const char *it;
-//	err = oSsid(s, "caca");
-//	err = oPsk(s, "proutcapue");
-//	err = oReboot(s);
-	err = oSurvey(s, &it);
-//	puts(it);
-	free((char*)it);
+
+	err = oSsid("caca2");
+	err = oPsk("proutcapue2"); // broken
+//	s = waitForReboot();
+//	err = oIp(s, "192.168.0.22", "255.255.255.0", MODE_STATIC);
+	waitForReboot();
+	err = oPwd(gUser, gPass, "toor", "root");
+	free(gAuth); gAuth = NULL;
+//	err = oMode(s, MODE_BRIDGE);
+//	s = waitForReboot();
+
+	err = oSurvey(&it);
+//	free((char*)it);
 	return err;
 }
 
 int main(char c, const char **v) {
 	int s, err = EXIT_FAILURE;
-	static char addr[] = "192.168.0.254";
+	static char addr[] = "192.168.0.22";
 
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
 	if ((s = contact(makeAddr(addr))) == -1) {	// get socket
@@ -52,6 +55,6 @@ int main(char c, const char **v) {
 		if (gV) printf("Socket fd: %d\n", s);
 		err = work(s);				// work
 	}
-	cleanup(s);
+	cleanup();
 	return err;
 }
