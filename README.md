@@ -25,6 +25,6 @@ Connection: keep-alive
 
 
 Implement more functions
-
+Fix the memory leak (strduping credentials on reset-attempt)
 maybe rewrite in lower-level language
 

@@ -25,7 +25,7 @@ char *gUser = "toor";
 char *gPass = "root";
 extern char *gAuth;
 
-int work(int s) {
+int work() {
 	int err;
 	const char *it;
 
@@ -45,16 +45,12 @@ int work(int s) {
 }
 
 int main(char c, const char **v) {
-	int s, err = EXIT_FAILURE;
+	int err = EXIT_FAILURE;
 	static char addr[] = "192.168.0.22";
 
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
-	if ((s = contact(makeAddr(addr))) == -1) {	// get socket
-		err = EXIT_FAILURE; perror("contact");
-	} else {
-		if (gV) printf("Socket fd: %d\n", s);
-		err = work(s);				// work
-	}
+        gAddr = addr;
+	err = work();				// work
 	cleanup();
 	return err;
 }

@@ -16,7 +16,7 @@ char 		*gAddr, *gAuth = 0;
 struct in_addr *makeAddr(char *ip) {
 	static struct in_addr x;
 
-	if (gV) printf("Making address from %s\n", ip);
+	if (gV) printf("[%s]\t-> ", ip);
 	inet_aton(ip, &x);
 	gAddr = ip;
 	return &x;
@@ -31,7 +31,7 @@ char *encodeAuthString() {
 	strcpy(p, gUser);
 	p[S(gUser)] = ':';
 	strcpy(p+S(gUser)+1, gPass);
-	if (gV) printf("Encoding auth: %s\n", p);
+//	if (gV) printf("Encoding auth: %s\n", p);
 	q = base64_encode(p, S(p), &l);
 	free(p);
 	return (q);
@@ -109,12 +109,12 @@ unsigned short sendReq(const char *buf, size_t s, char **ob) {
 			perror("send"); exit(EXIT_FAILURE);
 		}
 		usleep(200); //heu
-		if (gV) printf("sent %i ", err);
+		if (gV) printf("sent:%i ", err);
 		if ((err = recv(socket, obuf, BL, MSG_WAITALL)) < 0) {
 			perror("recv"); exit(EXIT_FAILURE);
 		}
 		else {
-			if (gV) printf("recd %i ", err);
+			if (gV) printf("recd:%i \n", err);
 			if (gV > 1) puts(obuf);
 			err = bufToCode(obuf);
 		}
