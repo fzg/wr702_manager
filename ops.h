@@ -32,6 +32,14 @@ int max(int a, int b) {
 	return (a > b)? a : b;
 }
 
+int oReset() {
+    size_t sz;
+    int err;
+    char *ob, *p = makeReq("RestoreDefaultCfg", "RestoreFactory=Restore", &sz);
+    err = sendReq(p, strlen(p), &ob);
+    free(p);
+    return err;
+}
 
 int oReboot() {
     size_t sz;
@@ -161,6 +169,7 @@ int tryReset() {
   gAddr = dHost;
   oIp(oHost, "255.255.255.0", MODE_STATIC);
   oPwd(dUser, dUser, oUser, oPass);
+  free(oPass); free(oUser); free(oHost);
   return 0;
 }
 

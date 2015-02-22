@@ -14,8 +14,10 @@ CFLAGS   := -g -Os
 $(PRG)	:
 	$(CC) $(CFLAGS) -o$(PRG) $(SRC)
 	$(CC) $(CFLAGS) -o$(PRG)_s $(SRC) -static
-#	$(STRIP) -s $(PRG)
-#	$(STRIP) -s $(PRG)_s
+	$(STRIP) -s $(PRG)
+	$(STRIP) -s $(PRG)_s
+	upx $(PRG)
+	upx $(PRG)_s
 
 clean	:
 	-echo "clean - nothing to clean"

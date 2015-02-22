@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FBL (4096<<1)
-#define MIN_LEN 5
+#define FBL (4096<<1)			// fortune line buffer length
+#define MIN_LEN 5			// min length for match
+#define DELIM " \n%.,'\"!\t?[](){};:"	// word delimiters
 
-#define DELIM " \n%.,'\"!\t?[](){};:"
+extern char gV;				// verbosity
+static char *gFBuf;			// fortune line buffer
 
-extern char gV;
-
-int wc(char *p) {
+static int wc(char *p) {
   int c = -1;
   char *k, *tmp;
   while ((k = strpbrk(p, DELIM))) {
@@ -25,7 +25,7 @@ int wc(char *p) {
   return c;
 }
 
-char *nth(char *p, int i) {
+static char *nth(char *p, int i) {
   int c = -1;
   char *k;
   while ((k = strpbrk(p, DELIM))) {
@@ -40,12 +40,10 @@ char *nth(char *p, int i) {
   }
 }
 
-void rot13(char *p) {
-  char a, b;
+static void rot13(char *p) {
+  static char a, b;
   --p; while((a = *(++p))) *p=(((b=64^a&95)&&b<27)?a&224|(b+12)%26+1:a);
 }
-
-char *gFBuf;
 
 void cleanFortune() {
   if (gFBuf) free(gFBuf);
@@ -55,7 +53,7 @@ void cleanFortune() {
 char *getFortune() {
   FILE *ifs = NULL;
   static char *buf = NULL, *p, *q;
-  unsigned int nbe, i, j, sz;
+  unsigned int i, j, sz;
   size_t si = FBL;
   if (!buf) {
    if (!(buf = malloc(FBL))) {
@@ -65,28 +63,20 @@ char *getFortune() {
    gFBuf = buf;
    memset(buf, 0, sizeof(buf));
   }
-  ifs = fopen("./fortunes_off", "r");
+  if (!(ifs = fopen("./fortunes_off", "r"))) {
+   perror("fortunes_off fopen");
+  }
   sz = getline(&buf, &si, ifs); // get nb of entries
-  nbe = atoi(buf);
-//  printf("There are %i entries\n", nbe);
-  i = rand() % nbe ;
-//  printf("We get the %i-th\n", i);
-  for (j = 0; j <= i; ++j)
-    sz = getdelim(&buf, &si, '%', ifs);
+  i = rand() % atoi(buf);
+  for (j = 0; j <= i; ++j) sz = getdelim(&buf, &si, '%', ifs);
   // got a random fortune, now select a random word of min length x
-  rot13(buf);
+  rot13(buf); // offensive fortunes are rot13-scrambled
   if (gV > 2) printf("Got:\n%s\n", buf);
-  i = wc(buf) + 1; // number of spaces.
+  i = wc(buf) + 1;
   if (gV > 2) printf("There are %i bigwords\n", i);
   i = rand() % i;
   if (gV > 2) printf("We want the %ith\n", i);
-  p = nth(buf, i); // to do: put \0 at end of word
-//  printf("We got:%s\n", p);
-  //q = strndup(p, (strpbrk(p, " \n%.,'\"") - p));
+  p = nth(buf, i);
   fclose(ifs);
-
-//  if (strlen(q) < MIN_LEN)
-//    return getFortune();
-//  else
-    return p;
+  return p;
 }
