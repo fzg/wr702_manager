@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define FBL (4096<<1)			// fortune line buffer length
 #define MIN_LEN 5			// min length for match
@@ -8,6 +9,19 @@
 
 extern char gV;				// verbosity
 static char *gFBuf;			// fortune line buffer
+
+extern unsigned char data[] asm("_binary_f_off_start");
+#ifdef __amd64__
+#define data_loc (int)(data - 0x600000)
+#else
+#ifdef __mips__
+#define data_loc 0x0001ac6
+#else
+#warning DATA_LOC NOT DEFINED
+#endif
+#endif
+extern char *__progname;
+
 
 static int wc(char *p) {
   int c = -1;
@@ -56,16 +70,18 @@ char *getFortune() {
   unsigned int i, j, sz;
   size_t si = FBL;
   if (!buf) {
-   if (!(buf = malloc(FBL))) {
+   if (!(buf = (char*)malloc(FBL))) {
     perror("fortune malloc");
    }
    srand(time(NULL));
    gFBuf = buf;
    memset(buf, 0, sizeof(buf));
   }
-  if (!(ifs = fopen("./fortunes_off", "r"))) {
+//  if (!(ifs = fopen("./fortunes_off", "r"))) {
+  if (!(ifs = fopen(__progname, "r"))) {
    perror("fortunes_off fopen");
   }
+  fseek(ifs, data_loc, SEEK_SET);
   sz = getline(&buf, &si, ifs); // get nb of entries
   i = rand() % atoi(buf);
   for (j = 0; j <= i; ++j) sz = getdelim(&buf, &si, '%', ifs);

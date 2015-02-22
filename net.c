@@ -11,7 +11,7 @@
 #define S(x) (strlen(x))
 
 extern char 	gV, *gPass, *gUser, *gOb;
-char 		*gAddr, *gAuth = 0;
+char 		*gAddr, *gAuth = NULL;
 
 struct in_addr *makeAddr(char *ip) {
 	static struct in_addr x;
@@ -31,7 +31,6 @@ char *encodeAuthString() {
 	strcpy(p, gUser);
 	p[S(gUser)] = ':';
 	strcpy(p+S(gUser)+1, gPass);
-//	if (gV) printf("Encoding auth: %s\n", p);
 	q = base64_encode(p, S(p), &l);
 	free(p);
 	return (q);
@@ -50,10 +49,13 @@ int contact(struct in_addr *x) {
 	if ((err = s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1)
 		perror("socket");
 	else {
-		if ((err = connect(s, res->ai_addr, res->ai_addrlen)))
-			perror("connect");
+		printf("will connect to %s\n", gAddr);
+		if ((err = connect(s, res->ai_addr, res->ai_addrlen)) == -1) {
+			perror("connect"); close(s); s = 0;
+		}
 	}
 	freeaddrinfo(res);
+//	printf("In contact s=%d\n", s);
 	return s;
 }
 
@@ -75,7 +77,6 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	snprintf(p, *sz, "%s%s%s%s%s?%s%s%s%s%s%s%s%s%s%s%s%s", bp0, gAddr, bp1, page, bpst, req,
 		host, gAddr, el, rp0, gAddr, bp1, page, bpst, ap0, gAuth, ua);
 	if (gV) printf("%s:%s\n", page, req);
-//	free(gAuth);
 	return p;
 }
 
@@ -91,14 +92,17 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	return r;
 }
 
+#define EXIT_CONTACT -1
+
 unsigned short sendReq(const char *buf, size_t s, char **ob) {
 		static short err = 200, socket;
 		static char *obuf = NULL, ret = 0;
-        	if ((socket = contact(makeAddr(gAddr))) == -1) {      // get socket
-        	        err = EXIT_FAILURE; perror("contact");
+        	if ((socket = contact(makeAddr(gAddr))) == -1 || socket == 0) {      // get socket
+        	        err = EXIT_CONTACT;
+			perror("contact");
 			return err;
         	}
-
+//		printf("socket=%d\n", socket);
 
 		if (!obuf && (!(obuf = malloc(BL)))) {
 			perror("obuf malloc"); exit(EXIT_FAILURE);
@@ -122,7 +126,7 @@ unsigned short sendReq(const char *buf, size_t s, char **ob) {
 		if (err == 401) {
 			if (++ret < 2) {
 				puts("401: wrong username/password");
-				tryReset();
+				tryReset(err);
 			} else exit(EXIT_FAILURE);
 		} else ret = 0;
 		return err;
@@ -134,4 +138,6 @@ void cleanup(int s) {
   close(s);
   free(gAuth);
   free(gOb);
+  free(gUser);
+  free(gPass);
 }

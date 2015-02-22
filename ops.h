@@ -6,7 +6,7 @@
 
 extern char gV;
 char *gOb;
-extern char *gAddr, *gUser, *gPass;
+extern char *gAddr, *gUser, *gPass, *gAuth;
 
 
 void xsleep(int n) {
@@ -18,13 +18,14 @@ void xsleep(int n) {
   usleep(1000000/3);
   putchar('\b');
   } while (--n > 0);
+  puts("\b\n");
 }
 
 
 
 void waitForReboot() {
   int s, d=11;
-  if (gV) printf("Waiting %dsec for reboot\n",d);
+  if (gV) printf("Waiting %dsec for reboot ",d);
      xsleep(d);
 }
 
@@ -81,12 +82,11 @@ int oSsid(const char *ssid) {
 int oSurvey(const char **res) {
     size_t sz;
     int err = EXIT_FAILURE;
-    char *t, *u, *ob, *p = makeReq("WlanStation", "Page=1", &sz);
+    char *t, *u, *ob = NULL, *p = makeReq("WlanStation", "Page=1", &sz);
     err = sendReq(p, strlen(p), &ob);
     *res = ob;
     free(p);
-    t = strstr(ob, "wlanHostPara");
-    if (t) {
+    if (ob && (t= strstr(ob, "wlanHostPara"))) {
 	u = index(t, '\n');
         printf("Currently connected users: %d\n", atoi(u));
 
@@ -125,8 +125,10 @@ int oPwd(const char *ou, const char *op, const char *nu, const char *np) {
     snprintf(q, sz, fs, ou, nu, op, np);
     p = makeReq("ChangeLoginPwd", q, &sz);
     err = sendReq(p, strlen(p), &ob);
-    gUser = strdup(nu);
-    gPass = strdup(np);
+    if (gUser) free(gUser);
+    if (gPass) free(gPass);
+    gUser = strdup(nu); //TODO FIXME
+    gPass = strdup(np); //TODO FIXME
     free(p); free(q);
     return err;
 }
@@ -156,20 +158,30 @@ int oIp(const char *ip, const char *nm, const short m) {
 }
 
 
-int tryReset() {
+int tryReset(int err) {
   char *dUser="admin", *dHost="192.168.0.254";
   char *oPass, *oUser, *oHost;
 
   if (gV) puts("This assumes the router was reset.\nReset and relaunch if you're impatient.");
-  oPass = strdup(gPass);
-  oUser = strdup(gUser);
-  oHost = strdup(gAddr);
-  gPass = dUser;
-  gUser = dUser;
-  gAddr = dHost;
-  oIp(oHost, "255.255.255.0", MODE_STATIC);
-  oPwd(dUser, dUser, oUser, oPass);
-  free(oPass); free(oUser); free(oHost);
+  if (gAuth) {
+    free(gAuth);
+    gAuth = NULL;
+  }					// for new http auth
+  oPass = strdup(gPass); oUser = strdup(gUser);
+  gPass = dUser; gUser = dUser;
+  if (err != 401) {
+   oIp(oHost, "255.255.255.0", MODE_STATIC);	// WR:  reset ip to whished ip
+   gAddr=oHost;					// app: same
+   waitForReboot();				// give it time to reset
+   oHost = strdup(gAddr);
+   gAddr = dHost;
+  }
+  oPwd(dUser, dUser, oUser, oPass);		// reset password ( on new ip)
+  if (gAuth) free(gAuth);			// for new http auth
+  gAuth = NULL;
+//  gPass = oPass; gUser = oUser;
+  free(oPass); free(oUser);
+  if (err == 401) free(oHost);
   return 0;
 }
 
