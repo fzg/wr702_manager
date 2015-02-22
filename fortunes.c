@@ -12,7 +12,7 @@ static char *gFBuf;			// fortune line buffer
 
 extern unsigned char data[] asm("_binary_f_off_start");
 #ifdef __amd64__
-#define data_loc (int)(data - 0x600000)
+#define data_loc (long)(data - 0x600000)
 #else
 #ifdef __mips__
 #define data_loc 0x0001ac6
@@ -70,9 +70,7 @@ char *getFortune() {
   unsigned int i, j, sz;
   size_t si = FBL;
   if (!buf) {
-   if (!(buf = (char*)malloc(FBL))) {
-    perror("fortune malloc");
-   }
+   xmalloc(&buf, FBL);
    srand(time(NULL));
    gFBuf = buf;
    memset(buf, 0, sizeof(buf));

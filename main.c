@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "util.h"
 #include "net.h"
 #include "ops.h"
 #include "fortunes.h"
@@ -22,49 +23,37 @@
 			 smode Client
 */
 
-char gV = 0;	// verbose
-char *gUser = NULL;
-char *gPass = NULL;
-extern char *gAuth;
+char gV = 0, *gUser = NULL, *gPass = NULL;
+extern char *gAuth, *gAddr;
 
 int work() {
 	int err;
-	const char *it;
+	char *it;
 
 	if ((err = oSsid(getFortune())) == 401 || err == 65535) {
-        printf("err=%d\n", err);
-
-		err = tryReset(err);        printf("err2=%d\n", err);
-
+	  if ((err = tryReset(err)) == 65535)
+            exit(printf("Network seems down. Aborting.\n"));
 	}
-//	printf("err=%d\n", err);
-	err = oPsk(getFortune()); // broken
-//	s = waitForReboot();
+	err = oPsk(getFortune());
 //	err = oIp(s, "192.168.0.22", "255.255.255.0", MODE_STATIC);
 	waitForReboot();
 	err = oPwd(gUser, gPass, "toor", "root");
-	free(gAuth); gAuth = NULL;
+	xfree(&gAuth);
 //	err = oMode(s, MODE_BRIDGE);
 //	s = waitForReboot();
-
 	err = oSurvey(&it);
-//	free((char*)it);
+	xfree(&it);
 	return err;
 }
 
 int main(char c, const char **v) {
 	int err = EXIT_FAILURE;
 	static char addr[] = "192.168.0.22";
-	gUser=strdup("toor");
-	gPass=strdup("root");
-//        puts(getFortune());
-//	  cleanFortune();
-//        exit(0);
-
+	xstrdup(&gUser, "toor");
+	xstrdup(&gPass, "root");
+	xstrdup(&gAddr, "192.168.0.22");
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
-        gAddr = addr;
 	err = work();				// work
 	cleanup();
-	cleanFortune();
 	return err;
 }
