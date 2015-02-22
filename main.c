@@ -49,7 +49,8 @@ int work() {
 int main(char c, const char **v) {
 	int err = EXIT_FAILURE;
 
-	extractFortunes(5);
+//	extractFortunes(5);
+	while (++ err < 42) puts(minGetFortune());
 	exit(0);
 
 	xstrdup(&gUser, "toor");

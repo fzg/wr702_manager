@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "dat.h"
+
 #define FBL (4096<<1)			// fortune line buffer length
 #define MIN_LEN 5			// min length for match
 #define DELIM " \n%.,'\"!\t?[](){};:"	// word delimiters
@@ -93,7 +95,7 @@ char *extractFortunes(int minl) {
     sz = getdelim(&buf, &si, '%', ifs);
     rot13(buf); // offensive fortunes are rot13-scrambled
     i = wc(buf) + 1;
-    for (k = 0; k < i; ++k) puts(nth(buf, k));
+    for (k = 0; k < i; ++k) printf("%s\\n \\\n", nth(buf, k));
   }
   fclose(ifs);
   return NULL;
@@ -129,4 +131,30 @@ char *getFortune() {
   p = nth(buf, i);
   fclose(ifs);
   return p;
+}
+
+// we
+
+
+char *minGetFortune() {
+ static int nFort = 0, i;
+ static char *ret = NULL;
+ char *p, *k;
+ if (!nFort) {
+   p = fortunes;
+   while (p && *p && (p = strchr(p, '\n'))) {++nFort;++p;}
+   if (gV) printf("We got %d words\n", nFort);
+   srand(time(NULL));
+ }
+ i = rand() % nFort;
+// printf("randomly selected nb %d/%d\n", i, nFort);
+ p = fortunes;
+ while (((p = strchr(p, '\n')) && i)) {--i; ++p;}
+ p += 2;
+ k = strpbrk(p, DELIM);
+// printf("k-p %d\n", k-p);
+ *(p+(k-p)) = 0;
+ xstrdup(&ret, p);
+ *(p+(k-p)) = '\n';
+ return ret;
 }
