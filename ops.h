@@ -1,0 +1,169 @@
+#ifndef _OPS_H_
+#define _OPS_H_
+
+#include <string.h>
+
+
+extern char gV;
+char *gOb;
+extern char *gAddr, *gUser, *gPass;
+
+
+void xsleep(int n) {
+  const char x[] = "/|\\-";
+  n *= 3;
+  do {
+  putchar(x[n%strlen(x)]);
+  fflush(stdout);
+  usleep(1000000/3);
+  putchar('\b');
+  } while (--n > 0);
+}
+
+
+
+void waitForReboot() {
+  int s, d=11;
+  if (gV) printf("Waiting %dsec for reboot\n",d);
+     xsleep(d);
+}
+
+int max(int a, int b) {
+	return (a > b)? a : b;
+}
+
+
+int oReboot() {
+    size_t sz;
+    int err = EXIT_FAILURE;
+    char *ob, *p = makeReq("SysReboot", "Reboot=Reboot", &sz);
+    err = sendReq(p, strlen(p), &ob);
+    free(p);
+    return err;
+}
+
+int oPsk(const char *psk) {
+    const char it[] = "Save=Save&pskSecOpt=3&pskCipher=1&interval=86400&sectype=3&intervalWpa=86400&broadcast=2&pskSecret=";
+    size_t sz, st; int err = EXIT_FAILURE;
+    char *p, *t;
+    if (!(t = malloc((st = strlen(it) + strlen(psk) + 1)))) {
+	perror("oPsk malloc"); return err;
+    }
+    snprintf(t, st, "%s%s", it, psk);
+    p = makeReq("WlanSecurity", t, &sz);
+    err = sendReq(p, strlen(p), &gOb);
+    free(p); free(t);
+    return err;
+}
+
+int oSsid(const char *ssid) {
+    const char it[] = "Save=Save&broadcast=2&ap=1&ssid1=";
+    size_t sz, st; int err = EXIT_FAILURE;
+    char *ob, *t, *p;
+    if (!(t = malloc((st = strlen(it) + strlen(ssid) + 1)))) {
+        perror("oSsid malloc"); return err;
+    }
+    snprintf(t, st, "%s%s", it, ssid);
+    p = makeReq("WlanNetwork", t, &sz);
+    err = sendReq(p, strlen(p), &gOb);
+    free(p); free(t);
+    return err;
+}
+
+int oSurvey(const char **res) {
+    size_t sz;
+    int err = EXIT_FAILURE;
+    char *t, *u, *ob, *p = makeReq("WlanStation", "Page=1", &sz);
+    err = sendReq(p, strlen(p), &ob);
+    *res = ob;
+    free(p);
+    t = strstr(ob, "wlanHostPara");
+    if (t) {
+	u = index(t, '\n');
+        printf("Currently connected users: %d\n", atoi(u));
+
+        t = index((t = strstr(ob, "hostList")), '\n');      // debut de liste
+        u = strstr(t, "</SCRIPT>") - 1;
+        *u = 0;
+        printf("HostList: %s\n", t, '\n');
+    }
+    return err;
+}
+
+#define MODE_AP		1
+#define MODE_ROUTER	2
+#define MODE_REPEATER	3
+#define MODE_BRIDGE	4
+#define MOD_CLIENT	5
+
+int oMode(const short m) {
+    size_t sz;
+    int err = EXIT_FAILURE;
+    char om[] = "Save=Save&opmode=c";
+    *(index(om, 'c')) = m+'0';
+    char *ob, *p = makeReq("WlanApMode", om, &sz);
+    err = sendReq(p, strlen(p), &ob);
+    free(p);
+    return err;
+}
+
+int oPwd(const char *ou, const char *op, const char *nu, const char *np) {
+    size_t sz;
+    int err = EXIT_FAILURE;
+    char fs[] = "Save=Save&oldname=%s&newname=%s&oldpassword=%s&newpassword=%s";
+    char *ob, *q, *p;
+    sz = strlen(fs)-(2*4)+1+strlen(ou)+strlen(op)+strlen(nu)+strlen(np);
+    q = malloc(sz);
+    snprintf(q, sz, fs, ou, nu, op, np);
+    p = makeReq("ChangeLoginPwd", q, &sz);
+    err = sendReq(p, strlen(p), &ob);
+    gUser = strdup(nu);
+    gPass = strdup(np);
+    free(p); free(q);
+    return err;
+}
+
+#define MODE_STATIC 1
+#define MODE_SMART  2
+
+// FIXME: memleak quand on reaffecte l'ip en global
+// FIX: soit en rw, soit en malloced/allocaed
+int oIp(const char *ip, const char *nm, const short m) {
+    size_t sz;
+    int err = EXIT_FAILURE;
+    char fs[] = "Save=Save&lanip=%s&inputMask=%s&lanmask=1&porttype=%d";
+    char *ob, *q, *p;
+
+    sz = strlen(fs)-(2*3)+1+strlen(ip)+strlen(nm)+1;
+    q = malloc(sz);
+    snprintf(q, sz, fs, ip, nm, m);
+    p = makeReq("NetworkCfg", q, &sz);
+    err = sendReq(p, strlen(p), &ob);
+    if (strncmp(ip, gAddr, max(strlen(ip), strlen(gAddr)))) {
+       gAddr = strdup(ip);
+    }
+    free(p); free(q);
+    return err;
+
+}
+
+
+int tryReset() {
+  char *dUser="admin", *dHost="192.168.0.254";
+  char *oPass, *oUser, *oHost;
+
+  if (gV) puts("This assumes the router was reset.\nReset and relaunch if you're impatient.");
+  oPass = strdup(gPass);
+  oUser = strdup(gUser);
+  oHost = strdup(gAddr);
+  gPass = dUser;
+  gUser = dUser;
+  gAddr = dHost;
+  oIp(oHost, "255.255.255.0", MODE_STATIC);
+  oPwd(dUser, dUser, oUser, oPass);
+  return 0;
+}
+
+
+#endif
+

@@ -25,6 +25,8 @@ char *gUser = "toor";
 char *gPass = "root";
 extern char *gAuth;
 
+char *getFortune();
+
 int work() {
 	int err;
 	const char *it;
@@ -47,6 +49,9 @@ int work() {
 int main(char c, const char **v) {
 	int err = EXIT_FAILURE;
 	static char addr[] = "192.168.0.22";
+
+        puts(getFortune());
+        exit(0);
 
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
         gAddr = addr;
