@@ -13,18 +13,18 @@ _Warning:_ using this program may result in offensive SSIDs.
 
 ## TODO
 
-.$`.....://192.168.0.254/userRpm/SysRebootRpm.htm?Reboot=Reboot HTTP/1.1
-Host: 192.168.0.254
-User-Agent: Mozilla/5.0
-Accept: text/html
+Regarding the C version
+the fortunes_off file is just the concatenation of nasty fortune files.
+On the first line is the `grep -c "^%$" fortunes_off` (count of fortunes)
+Of course 1.8MB is too big for some applications, that's why we could 
+preprocess further and only keep unique fitting entries, in a possibly compressed
+way. that's on the todo.
 
-Accept-Language: en;q=0.7
-Referer: http://192.168.0.254/userRpm/SysRebootRpm.htm
-Authorization: Basic YWRtaW46YWRtaW4=
-Connection: keep-alive
 
 
 Implement more functions
+
 Fix the memory leak (strduping credentials on reset-attempt)
-maybe rewrite in lower-level language
+
+
 

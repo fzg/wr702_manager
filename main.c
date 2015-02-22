@@ -26,13 +26,13 @@ char *gPass = "root";
 extern char *gAuth;
 
 char *getFortune();
-
+void cleanFortune();
 int work() {
 	int err;
 	const char *it;
 
-	err = oSsid("caca2");
-	err = oPsk("proutcapue2"); // broken
+	err = oSsid(getFortune());
+	err = oPsk(getFortune()); // broken
 //	s = waitForReboot();
 //	err = oIp(s, "192.168.0.22", "255.255.255.0", MODE_STATIC);
 	waitForReboot();
@@ -50,12 +50,14 @@ int main(char c, const char **v) {
 	int err = EXIT_FAILURE;
 	static char addr[] = "192.168.0.22";
 
-        puts(getFortune());
-        exit(0);
+//        puts(getFortune());
+//	cleanFortune();
+//        exit(0);
 
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
         gAddr = addr;
 	err = work();				// work
 	cleanup();
+	cleanFortune();
 	return err;
 }
