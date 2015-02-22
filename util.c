@@ -45,7 +45,9 @@ void xsleep(int n) {
   usleep(1000000/3);
   putchar('\b');
   } while (--n > 0);
-  puts("\b\n");
+  putchar('\b');
+  fflush(stdout);
+  puts(" \b");
 }
 
 int max(int a, int b) {

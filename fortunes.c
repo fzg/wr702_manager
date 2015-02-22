@@ -22,12 +22,13 @@ extern unsigned char data[] asm("_binary_f_off_start");
 #endif
 extern char *__progname;
 
+int gMinLen = MIN_LEN;
 
 static int wc(char *p) {
   int c = -1;
   char *k, *tmp;
   while ((k = strpbrk(p, DELIM))) {
-   if (k-p >= MIN_LEN) {
+   if (k-p >= gMinLen) {
     ++c;
     if (gV > 2) {
      printf("%3i\t%s\n", c, (tmp = strndup(p, k-p)));
@@ -42,12 +43,17 @@ static int wc(char *p) {
 static char *nth(char *p, int i) {
   int c = -1;
   char *k;
+  static char *r = NULL;
+
+//  printf("nth %d\n", i);
   while ((k = strpbrk(p, DELIM))) {
-   if (k-p >= MIN_LEN) {
+   if (k-p >= gMinLen) {
     ++c;
     if (c == i) {
      *(p+(k-p)) = 0;
-     return p;
+     xstrdup(&r, p); // to comment
+     *(p+(k-p)) = ' '; //tocomment
+     return r;
     }
    }
    p=++k;
@@ -63,6 +69,36 @@ void cleanFortune() {
   if (gFBuf) free(gFBuf);
   gFBuf = NULL;
 }
+
+char *extractFortunes(int minl) {
+  FILE *ifs = NULL;
+  static char *buf = NULL, *p, *q;
+  unsigned int i, j, sz, k;
+  size_t si = FBL;
+  gMinLen = minl;
+  if (!buf) {
+   xmalloc(&buf, FBL);
+   srand(time(NULL));
+   gFBuf = buf;
+   memset(buf, 0, sizeof(buf));
+  }
+  if (!(ifs = fopen(__progname, "r"))) {
+   perror("fortunes_off fopen");
+  }
+  fseek(ifs, data_loc, SEEK_SET);
+  sz = getline(&buf, &si, ifs); // get nb of entries
+  i = atoi(buf);
+  if (gV) printf("Extracting words > %d chars\n", minl);
+  for (j = 0; j <= i; ++j)  {
+    sz = getdelim(&buf, &si, '%', ifs);
+    rot13(buf); // offensive fortunes are rot13-scrambled
+    i = wc(buf) + 1;
+    for (k = 0; k < i; ++k) puts(nth(buf, k));
+  }
+  fclose(ifs);
+  return NULL;
+}
+
 
 char *getFortune() {
   FILE *ifs = NULL;

@@ -1,10 +1,7 @@
-
 #include "ops.h"
-#include <string.h>
 
-extern char gV;
 char *gOb;
-extern char *gAddr, *gUser, *gPass, *gAuth;
+extern char *gAddr, *gUser, *gPass, *gAuth, gV;
 
 void waitForReboot() {
   int s, d=11;

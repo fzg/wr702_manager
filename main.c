@@ -48,11 +48,16 @@ int work() {
 
 int main(char c, const char **v) {
 	int err = EXIT_FAILURE;
-	static char addr[] = "192.168.0.22";
+
+	extractFortunes(5);
+	exit(0);
+
 	xstrdup(&gUser, "toor");
 	xstrdup(&gPass, "root");
 	xstrdup(&gAddr, "192.168.0.22");
 	if (c > 1) gV = (v[1][0] =='v')? 1: (v[1][0] =='V')? 2 : 0;
+	waitForReboot();
+	return 0;
 	err = work();				// work
 	cleanup();
 	return err;
