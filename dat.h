@@ -98,7 +98,6 @@ whores\n \
 winning\n \
 wonderfully\n \
 worse\n \
-X-rated\n \
-";
+X-rated";
 #endif
 

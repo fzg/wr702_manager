@@ -12,18 +12,7 @@
 extern char gV;				// verbosity
 static char *gFBuf;			// fortune line buffer
 
-extern unsigned char data[] asm("_binary_f_off_start");
-#ifdef __amd64__
-#define data_loc (long)(data - 0x600000)
-#else
-#ifdef __mips__
-#define data_loc 0x0001ac6
-#else
-#warning DATA_LOC NOT DEFINED
-#endif
-#endif
-extern char *__progname;
-
+int data_loc = -1; // DO NOT USE. Legacy
 int gMinLen = MIN_LEN;
 
 static int wc(char *p) {
@@ -84,7 +73,7 @@ char *extractFortunes(int minl) {
    gFBuf = buf;
    memset(buf, 0, sizeof(buf));
   }
-  if (!(ifs = fopen(__progname, "r"))) {
+  if (0) {//!(ifs = fopen(__progname, "r"))) {
    perror("fortunes_off fopen");
   }
   fseek(ifs, data_loc, SEEK_SET);
@@ -113,8 +102,8 @@ char *getFortune() {
    gFBuf = buf;
    memset(buf, 0, sizeof(buf));
   }
-//  if (!(ifs = fopen("./fortunes_off", "r"))) {
-  if (!(ifs = fopen(__progname, "r"))) {
+  if (!(ifs = fopen("./fortunes_off", "r"))) {
+//  if (!(ifs = fopen(__progname, "r"))) {
    perror("fortunes_off fopen");
   }
   fseek(ifs, data_loc, SEEK_SET);
@@ -147,12 +136,12 @@ char *minGetFortune() {
    srand(time(NULL));
  }
  i = rand() % nFort;
-// printf("randomly selected nb %d/%d\n", i, nFort);
+//printf("%d\t", i);
  p = fortunes;
  while (((p = strchr(p, '\n')) && i)) {--i; ++p;}
  p += 2;
  k = strpbrk(p, DELIM);
-// printf("k-p %d\n", k-p);
+//printf("k-p %d\n", k-p);
  *(p+(k-p)) = 0;
  xstrdup(&ret, p);
  *(p+(k-p)) = '\n';
