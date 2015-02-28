@@ -4,7 +4,7 @@
 
 #include "util.h"
 
-static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+static const char enc_t[] = 	{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                                 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
                                 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
@@ -12,79 +12,73 @@ static char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
                                 'w', 'x', 'y', 'z', '0', '1', '2', '3',
                                 '4', '5', '6', '7', '8', '9', '+', '/'};
-static char *decoding_table = NULL;
-static int mod_table[] = {0, 2, 1};
+static char *dec_t = NULL;
+static const int mod_t[] = {0, 2, 1};
 
 
-char *base64_encode(const unsigned char *data,
-                    size_t input_length,
-                    size_t *output_length) {
+char *base64_encode(const unsigned char *d, size_t il, size_t *ol) {
 
-    *output_length = 4 * ((input_length + 2) / 3);
+    *ol = 4 * ((il + 2) / 3);
     int i, j;
-    char *encoded_data;
-    if (!(encoded_data = malloc(*output_length + 1))) return NULL;
+    char *ed;
+    if (!(ed = malloc(*ol + 1))) return NULL;
 
-    memset(encoded_data, 0, *output_length + 1);
-    for (i = 0, j = 0; i < input_length;) {
+    memset(ed, 0, *ol + 1);
+    for (i = 0, j = 0; i < il;) {
 
-        uint32_t octet_a = i < input_length ? (unsigned char)data[i++] : 0;
-        uint32_t octet_b = i < input_length ? (unsigned char)data[i++] : 0;
-        uint32_t octet_c = i < input_length ? (unsigned char)data[i++] : 0;
+        uint32_t octet_a = i < il ? (unsigned char)d[i++] : 0;
+        uint32_t octet_b = i < il ? (unsigned char)d[i++] : 0;
+        uint32_t octet_c = i < il ? (unsigned char)d[i++] : 0;
 
         uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
 
-        encoded_data[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+        ed[j++] = enc_t[(triple >> 3 * 6) & 0x3F];
+        ed[j++] = enc_t[(triple >> 2 * 6) & 0x3F];
+        ed[j++] = enc_t[(triple >> 1 * 6) & 0x3F];
+        ed[j++] = enc_t[(triple >> 0 * 6) & 0x3F];
     }
 
-    for (i = 0; i < mod_table[input_length % 3]; i++)
-        encoded_data[*output_length - 1 - i] = '=';
-//    encoded_data[*output_length - 1] = 0;
-    return encoded_data;
+    for (i = 0; i < mod_t[il % 3]; i++)
+        ed[*ol - 1 - i] = '=';
+    return ed;
 }
 
 void build_decoding_table();
 
-unsigned char *base64_decode(const char *data,
-                             size_t input_length,
-                             size_t *output_length) {
+unsigned char *base64_decode(const char *d, size_t il, size_t *ol) {
     int i, j;
-    unsigned char *decoded_data;
+    unsigned char *dd;
 
-    if (!decoding_table) build_decoding_table();
-    if (input_length % 4) return NULL;
-    *output_length = input_length / 4 * 3;
-    if (data[input_length - 1] == '=') (*output_length)--;
-    if (data[input_length - 2] == '=') (*output_length)--;
-    if (!(decoded_data == malloc(*output_length))) return NULL;
-    for (i = 0, j = 0; i < input_length;) {
-        uint32_t sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
-        uint32_t triple = (sextet_a << 3 * 6)
+    if (!dec_t) build_decoding_table();
+    if (il % 4) return NULL;
+    *ol = il / 4 * 3;
+    if (d[il - 1] == '=') --(*ol);
+    if (d[il - 2] == '=') --(*ol);
+    if (!(dd = malloc(*ol))) return NULL;
+    for (i = 0, j = 0; i < il;) {
+        uint32_t sextet_a = d[i] == '=' ? 0 & i++ : dec_t[d[i++]];
+        uint32_t sextet_b = d[i] == '=' ? 0 & i++ : dec_t[d[i++]];
+        uint32_t sextet_c = d[i] == '=' ? 0 & i++ : dec_t[d[i++]];
+        uint32_t sextet_d = d[i] == '=' ? 0 & i++ : dec_t[d[i++]];
+        uint32_t t = (sextet_a << 3 * 6)
         + (sextet_b << 2 * 6)
         + (sextet_c << 1 * 6)
         + (sextet_d << 0 * 6);
-        if (j < *output_length) decoded_data[j++] = (triple >> 2 * 8) & 0xFF;
-        if (j < *output_length) decoded_data[j++] = (triple >> 1 * 8) & 0xFF;
-        if (j < *output_length) decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
+        if (j < *ol) dd[j++] = (t >> 2 * 8) & 0xFF;
+        if (j < *ol) dd[j++] = (t >> 1 * 8) & 0xFF;
+        if (j < *ol) dd[j++] = (t >> 0 * 8) & 0xFF;
     }
-    return decoded_data;
+    return dd;
 }
 
 
 void build_decoding_table() {
-    int i;
-    xmalloc((void**)&decoding_table, 256);
-    for (i = 0; i < 64; i++)
-        decoding_table[(unsigned char) encoding_table[i]] = i;
+    int i = -1;
+    xmalloc((void**)&dec_t, 256);
+    while (++i < 64) dec_t[(unsigned char) enc_t[i]] = i;
 }
 
 
 void base64_cleanup() {
-    xfree(&decoding_table);
+    xfree(&dec_t);
 }

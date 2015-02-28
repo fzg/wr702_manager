@@ -17,7 +17,7 @@ char 		*gAddr = NULL, *gAuth = NULL;
 struct in_addr *makeAddr(char *ip) {
 	static struct in_addr x;
 
-	if (gV) printf("[%s]\t-> ", ip);
+	if (gV > 1) printf("[makeAddr]\t%s\t", ip);
 	inet_aton(ip, &x);
 	gAddr = ip;
 	return &x;
@@ -31,7 +31,7 @@ static char *encodeAuthString() {
 	p[S(gUser)] = ':';
 	strcpy(p+S(gUser)+1, gPass);
 	q = base64_encode(p, S(p), &l);
-	free(p);
+	xfree(&p);
 	return (q);
 };
 
@@ -45,6 +45,10 @@ static int contact(struct in_addr *x) {
         hints.ai_protocol = IPPROTO_TCP;
         hints.ai_flags = AI_ADDRCONFIG;
         if (err = getaddrinfo(gAddr, "80", &hints, &res)) perror("getaddrinfo");
+	if (!res) {
+		puts("[contact]RES NULL!!!!");
+		return s;
+	}
 	if ((err = s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1)
 		perror("socket");
 	else {
@@ -66,15 +70,15 @@ char *makeReq(const char *page, const char *req, size_t *sz) {
 	char *p = NULL;
 
 	if (!gAuth) gAuth = encodeAuthString();
-	if (gV > 1) printf("Encoded to: %s\n", gAuth);
+	if (gV > 1) printf("[makeReq]\tEnc\t\t%s\n", gAuth);
 	*sz = S(bp0)+S(gAddr)+S(bp1)+S(page)+S(bpst)+S(req)+S(host)+S(gAddr)+S(el)+S(rp0)+S(gAddr)+S(bp1)+S(page)+S(bpst)+S(ap0)
 		+S(gAuth)+S(ua)+ 2;
 	xmalloc(&p, *sz);
 	memset(p, 0, *sz);
-	if (gV > 1) printf("Allocated %i@%x\n",*sz,p);
+	if (gV > 2) printf("[makeReq]\tAlloc:\t%i@%x\n",*sz,p);
 	snprintf(p, *sz, "%s%s%s%s%s?%s%s%s%s%s%s%s%s%s%s%s%s", bp0, gAddr, bp1, page, bpst, req,
 		host, gAddr, el, rp0, gAddr, bp1, page, bpst, ap0, gAuth, ua);
-	if (gV) printf("%s:%s\n", page, req);
+	if (gV) printf("[makeReq]\t-> %s\t%s\n", page, req);
 	return p;
 }
 
@@ -85,7 +89,7 @@ unsigned short bufToCode(const char buf[]) {
 	b[3] = 0;
 	memcpy(b, &buf[9], 3);
 	r = atoi(b);
-	if (gV) printf("Got back code %i\n", r);
+	if (gV > 1) printf("[bufToCode]\t<- HTTP #%i\n", r);
 	return r;
 }
 
@@ -103,19 +107,19 @@ unsigned short sendReq(const char *buf, size_t s, char **ob) {
 			perror("send"); exit(EXIT_FAILURE);
 		}
 		usleep(200); //FIXME: why?
-		if (gV) printf("sent:%i ", err);
+		if (gV > 1) printf("s: %i\t", err);
 		if ((err = recv(socket, obuf, BL, MSG_WAITALL)) < 0) {
 			perror("recv"); exit(EXIT_FAILURE);
 		}
 		else {
-			if (gV) printf("recd:%i \n", err);
-			if (gV > 1) puts(obuf);
+			if (gV > 1) printf("r: %i\n", err);
+			if (gV > 3) puts(obuf);
 			err = bufToCode(obuf);
 		}
 		close(socket);
 		if (err == 401) {
 			if (++ret < 2) {
-				puts("401: wrong username/password");
+				puts("[sendReq]401: wrong username/password");
 				tryReset(err);
 			} else exit(EXIT_FAILURE);
 		} else ret = 0;

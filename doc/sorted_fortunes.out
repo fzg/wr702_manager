@@ -1,7 +1,4 @@
-#ifndef _D_FORT_H_
-#define _D_FORT_H_
-
-static char fortunes[] = "000th\n \
+000th\n \
 03/24/2001\n \
 0-394-58601-8\n \
 0-465-01606-5\n \
@@ -22469,6 +22466,3 @@ Zorach\n \
 Zuiga\n \
 Zukav\n \
 zzzzzzzzz\n \
-";
-#endif
-

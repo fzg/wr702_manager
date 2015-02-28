@@ -1,7 +1,6 @@
 #ifndef _OPS_H_
 #define _OPS_H_
 
-#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -26,6 +25,8 @@ extern char *gAddr, *gUser, *gPass, *gAuth;
 
 
 void waitForReboot();
+
+
 
 int oReset();
 int oReboot();

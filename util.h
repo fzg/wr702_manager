@@ -3,7 +3,7 @@
 
 void xfree(char **);
 void xmalloc(void **, size_t);
-void xstrdup(char **, char *);
+void xstrdup(char **, const char *);
 void xsleep(int n);
 int max(int a, int b);
 

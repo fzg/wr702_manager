@@ -6,19 +6,18 @@ ARCH	 := x86_64-linux-gnu
 
 CC	 := $(ARCH)-gcc
 STRIP	 := $(ARCH)-strip
-PRG	 := wrdo_$(ARCH)
-SRC	 := b64.c main.c net.c util.c ops.c
+PRG	 := ./bin/wrdo_$(ARCH)
+SRC	 := ./*.c
 CFLAGS   := -g -Os
 #CFLAGS   := -Os
 
 $(PRG)	:
-	$(CC) $(CFLAGS) -c fortunes.c
-	$(CC) $(CFLAGS) -o$(PRG) fortunes.o  $(SRC) -Wl,--format=binary -Wl,f_off -Wl,--format=default
-	$(CC) $(CFLAGS) -o$(PRG)_s fortunes.o $(SRC) -static -Wl,--format=binary -Wl,f_off -Wl,--format=default
+	$(CC) $(CFLAGS) -o$(PRG) $(SRC)
+#	$(CC) $(CFLAGS) -o$(PRG)_s $(SRC) -static
 #	$(STRIP) -s $(PRG)
-	$(STRIP) -s $(PRG)_s
+#	$(STRIP) -s $(PRG)_s
 #	upx $(PRG)
-	upx $(PRG)_s
+#	upx $(PRG)_s
 
 clean	:
 	-echo "clean - nothing to clean"

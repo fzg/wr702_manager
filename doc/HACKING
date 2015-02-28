@@ -1,0 +1,8 @@
+To add functionalities see into arg_parser.h / arg_parser.c for format.
+
+Your callback needs to be a int func(char **); ( see into opTs.c/.h)
+
+Return 200 or 0 if you're good, return -1 if something horrible happened, 403 if you want to be original.
+
+See into ops.c / ops.h for operations over router
+

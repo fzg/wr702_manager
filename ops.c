@@ -1,11 +1,12 @@
+#include <string.h>
 #include "ops.h"
 
-char *gOb;
+char *gOb = NULL;
 extern char *gAddr, *gUser, *gPass, *gAuth, gV;
 
 void waitForReboot() {
   int s, d=11;
-  if (gV) printf("Waiting %dsec for reboot ",d);
+  if (gV) printf("[Reboot]\tWaiting %d' ",d);
      xsleep(d);
 }
 
@@ -31,6 +32,11 @@ int oPsk(const char *psk) {
     const char it[] = "Save=Save&pskSecOpt=3&pskCipher=1&interval=86400&sectype=3&intervalWpa=86400&broadcast=2&pskSecret=";
     size_t sz, st; int err = EXIT_FAILURE;
     char *p, *t;
+    if (strlen(psk) < 8)
+	puts("WARNING: PSK shorter than 8 characters will be IGNORED");
+    if (strlen(psk) > 63)
+        puts("WARNING: PSK longer than 63 characters will be IGNORED");
+
     if (!(t = malloc((st = strlen(it) + strlen(psk) + 1)))) {
 	perror("oPsk malloc"); return err;
     }
@@ -51,7 +57,8 @@ int oSsid(const char *ssid) {
     snprintf(t, st, "%s%s", it, ssid);
     p = makeReq("WlanNetwork", t, &sz);
     err = sendReq(p, strlen(p), &gOb);
-    free(p); free(t);
+    free(p);
+    free(t);
     return err;
 }
 
@@ -81,7 +88,7 @@ int oMode(const short m) {
     *(index(om, 'c')) = m+'0';
     char *ob, *p = makeReq("WlanApMode", om, &sz);
     err = sendReq(p, strlen(p), &ob);
-    free(p);
+    free(p);    //xfree(&ob);
     return err;
 }
 
@@ -95,10 +102,8 @@ int oPwd(const char *ou, const char *op, const char *nu, const char *np) {
     snprintf(q, sz, fs, ou, nu, op, np);
     p = makeReq("ChangeLoginPwd", q, &sz);
     err = sendReq(p, strlen(p), &ob);
-    if (gUser) free(gUser);
-    if (gPass) free(gPass);
-    gUser = strdup(nu); //TODO FIXME
-    gPass = strdup(np); //TODO FIXME
+    xstrdup(&gUser, nu);
+    xstrdup(&gPass, np);
     free(p); free(q);
     return err;
 }
@@ -115,8 +120,9 @@ int oIp(const char *ip, const char *nm, const short m) {
     p = makeReq("NetworkCfg", q, &sz);
     err = sendReq(p, strlen(p), &ob);
     if (strncmp(ip, gAddr, max(strlen(ip), strlen(gAddr)))) {
-       gAddr = strdup(ip);
+       xstrdup(&gAddr, ip);
     }
+    //xfree(&ob);
     free(p); free(q);
     return err;
 
@@ -125,25 +131,32 @@ int oIp(const char *ip, const char *nm, const short m) {
 int tryReset(int err) {
   char *dUser="admin", *dHost="192.168.0.254";
   char *oPass, *oUser, *oHost;
+  int merr = 0;
 
+  oPass = oUser = oHost = NULL;
   if (gV) puts("This assumes the router was reset.\nReset and relaunch if you're impatient.");
-  if (gAuth) {
-    free(gAuth);
-    gAuth = NULL;
-  }					// for new http auth
-  oPass = strdup(gPass); oUser = strdup(gUser);
-  gPass = dUser; gUser = dUser;
+  xfree(&gAuth);
+  xstrdup(&oPass, gPass); oUser = strdup(gUser);
+  xstrdup(&oHost, dHost);
+  xstrdup(&gPass, dUser); xstrdup(&gUser, dUser);
   if (err != 401) {
-   oIp(oHost, "255.255.255.0", MODE_STATIC);	// WR:  reset ip to whished ip
-   gAddr=oHost;					// app: same
+   merr = oIp(oHost, "255.255.255.0", MODE_STATIC);	// WR:  reset ip to whished ip
+   if (merr == 65535) {
+     goto cleanup;
+   }
+   gAddr = oHost;					// app: same
    waitForReboot();				// give it time to reset
-   oHost = strdup(gAddr);
+   xstrdup(&oHost, gAddr);
    gAddr = dHost;
   }
-  oPwd(dUser, dUser, oUser, oPass);		// reset password ( on new ip)
-  if (gAuth) free(gAuth);			// for new http auth
-  gAuth = NULL;
-  free(oPass); free(oUser);
-  if (err == 401) free(oHost);
-  return 0;
+  merr = oPwd(dUser, dUser, oUser, oPass);	// reset password ( on new ip)
+cleanup:
+  xstrdup(&gAddr, oHost);                                       // app: same
+  xstrdup(&gPass, oPass); // pb
+  xstrdup(&gUser, oUser); // pb
+  xfree(&oHost);
+  xfree(&gAuth);			// for new http auth
+  xfree(&oPass); xfree(&oUser);
+  if (err == 401) xfree(&oHost);
+  return merr;
 }

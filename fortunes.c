@@ -7,10 +7,10 @@
 
 #define FBL (4096<<1)			// fortune line buffer length
 #define MIN_LEN 5			// min length for match
-#define DELIM " \n%.,'\"!\t?[](){};:"	// word delimiters
+#define DELIM "\\ =|\n%.,'\"!\t?[](){};:"	// word delimiters
 
 extern char gV;				// verbosity
-static char *gFBuf;			// fortune line buffer
+char **gFBuf = NULL;			// fortune line buffer
 
 int data_loc = -1; // DO NOT USE. Legacy
 int gMinLen = MIN_LEN;
@@ -57,8 +57,8 @@ static void rot13(char *p) {
 }
 
 void cleanFortune() {
-  if (gFBuf) free(gFBuf);
-  gFBuf = NULL;
+  if (*gFBuf) free(*gFBuf);
+  *gFBuf = NULL;
 }
 
 char *extractFortunes(int minl) {
@@ -70,18 +70,18 @@ char *extractFortunes(int minl) {
   if (!buf) {
    xmalloc(&buf, FBL);
    srand(time(NULL));
-   gFBuf = buf;
+   gFBuf = &buf;
    memset(buf, 0, sizeof(buf));
   }
-  if (0) {//!(ifs = fopen(__progname, "r"))) {
+  if (!(ifs = fopen("./fortunes_off", "r"))) {
    perror("fortunes_off fopen");
   }
   fseek(ifs, data_loc, SEEK_SET);
   sz = getline(&buf, &si, ifs); // get nb of entries
   i = atoi(buf);
+  if ((gV = 2)) printf("i = %d\n", i);
   if (gV) printf("Extracting words > %d chars\n", minl);
-  for (j = 0; j <= i; ++j)  {
-    sz = getdelim(&buf, &si, '%', ifs);
+  while (-1 != (sz = getline(&buf, &si, ifs))) {
     rot13(buf); // offensive fortunes are rot13-scrambled
     i = wc(buf) + 1;
     for (k = 0; k < i; ++k) printf("%s\\n \\\n", nth(buf, k));
@@ -99,7 +99,7 @@ char *getFortune() {
   if (!buf) {
    xmalloc(&buf, FBL);
    srand(time(NULL));
-   gFBuf = buf;
+   gFBuf = &buf;
    memset(buf, 0, sizeof(buf));
   }
   if (!(ifs = fopen("./fortunes_off", "r"))) {
@@ -124,15 +124,23 @@ char *getFortune() {
 
 // we
 
+// CALLER DON'T FREE THAT.
+// IT'S __STATIC__.KTHXBYE
+// -except @ cleanup time-
+
+// Possibly: rand % sizeof(fortunes)
+//  puis le word le plus proche
+//  also, hard code nFort!?
 
 char *minGetFortune() {
  static int nFort = 0, i;
  static char *ret = NULL;
  char *p, *k;
  if (!nFort) {
+   gFBuf = &ret;
    p = fortunes;
    while (p && *p && (p = strchr(p, '\n'))) {++nFort;++p;}
-   if (gV) printf("We got %d words\n", nFort);
+   if (gV) printf("[minGetFortune]\tCount=%d\n", nFort);
    srand(time(NULL));
  }
  i = rand() % nFort;
