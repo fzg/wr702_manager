@@ -145,7 +145,7 @@ int tryReset(int err) {
      goto cleanup;
    }
    gAddr = oHost;					// app: same
-   waitForReboot();				// give it time to reset
+   askReboot();
    xstrdup(&oHost, gAddr);
    gAddr = dHost;
   }

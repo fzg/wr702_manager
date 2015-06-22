@@ -9,9 +9,12 @@
 
 #include "net.h"
 
-#define S(x) (strlen(x))
+//#define S(x) (sx))
 
-extern char 	gV, *gPass, *gUser, *gOb;
+
+extern char 	gP, gV, *gPass, *gUser, *gOb, *gProx;
+extern struct addrinfo *gPaI;
+
 char 		*gAddr = NULL, *gAuth = NULL;
 
 struct in_addr *makeAddr(char *ip) {
@@ -35,7 +38,7 @@ static char *encodeAuthString() {
 	return (q);
 };
 
-static int contact(struct in_addr *x) {
+static int contact(char ok){//struct in_addr *x) {
         struct addrinfo hints, *res;
         int err, s;
 
@@ -44,7 +47,12 @@ static int contact(struct in_addr *x) {
         hints.ai_family = AF_INET;
         hints.ai_protocol = IPPROTO_TCP;
         hints.ai_flags = AI_ADDRCONFIG;
-        if (err = getaddrinfo(gAddr, "80", &hints, &res)) perror("getaddrinfo");
+
+	if (gP) {
+		res = gPaI;
+	} else {
+        	if (err = getaddrinfo(gAddr, "80", &hints, &res)) perror("getaddrinfo");
+	}
 	if (!res) {
 		puts("[contact]RES NULL!!!!");
 		return s;
@@ -52,12 +60,20 @@ static int contact(struct in_addr *x) {
 	if ((err = s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == -1)
 		perror("socket");
 	else {
-//		printf("will connect to %s\n", gAddr);
-		if ((err = connect(s, res->ai_addr, res->ai_addrlen)) == -1) {
-			perror("connect"); close(s); s = 0;
+		if (!(gP && ok)) {	// FIXME: TODO: SAUF DANS LE CAS DE LA CONNEX AU PROXY
+			if ((err = connect(s, res->ai_addr, res->ai_addrlen)) == -1) {
+				puts(gai_strerror(err));
+				perror("connect"); close(s); s = 0;
+			}
 		}
 	}
-	freeaddrinfo(res);
+	if (!gP) freeaddrinfo(res);
+        if (gP) {
+		char *ob = NULL;
+		int r;
+		// todo : envoyer la requète. Proxify quoi
+		r = sendReq(gProx, strlen(gProx), &ob);
+        }
 	return s;
 }
 
@@ -95,12 +111,19 @@ unsigned short bufToCode(const char buf[]) {
 
 unsigned short sendReq(const char *buf, size_t s, char **ob) {
 		static short err = 200, socket;
-		static char *obuf = NULL, ret = 0;
-        	if ((socket = contact(makeAddr(gAddr))) == -1 || socket == 0) {      // get socket
+		char *obuf = NULL, ret = 0;
+		char oops = 0;
+//		if (gP && buf[1] == 'O') puts(buf);
+		if (gP && buf[1] == 'O') {// CONNECT
+			oops = 1; gP = 0;
+		}
+        	if ((socket = contact(oops)) == -1 || socket == 0) {      // get socket
         	        err = EXIT_CONTACT;
 			perror("contact");
+			if (oops) gP = 1;
 			return err;
         	}
+		if (oops) gP = 1;
 		xmalloc(&obuf, BL);
 		*ob = obuf;
 		if ((err = send(socket, buf, s, MSG_NOSIGNAL)) == -1) {
@@ -125,3 +148,31 @@ unsigned short sendReq(const char *buf, size_t s, char **ob) {
 		} else ret = 0;
 		return err;
 }
+
+//RFC 2817
+// host:port HTTP/1.1 to open tunnel
+
+
+int		proxify(const char *ipprt) {
+	const char *c_s_1 = "CONNECT ", *c_s_2 = " HTTP/1.1\r\nHost: ",
+	 *c_s_3 = "\r\n";
+	char *ibuf = NULL, *obuf = NULL;
+	size_t	l, o;
+	unsigned short tl = 0;
+	int err = EXIT_SUCCESS, tt;
+
+	if (!ipprt) return EXIT_FAILURE;
+/*	if (xmalloc(&ibuf, (tt =S(c_s_1)+S(c_s_2)+S(c_s_3)+
+		(S(ipprt)*2)+4))) {
+			memset(ibuf, 0, tt);
+			strcat(ibuf, c_s_1);
+			strcat(ibuf + (tl += S(c_s_1)), ipprt);
+        	        strcat(ibuf + (tl += S(ipprt)), c_s_2);
+        	        strcat(ibuf + (tl += S(c_s_2)), ipprt);
+        	        strcat(ibuf + (tl += S(ipprt)), c_s_3);
+		sendReq(ibuf, strlen(ibuf), &obuf);
+		printf("res: %s", obuf);
+	}*/
+	return err;
+}
+

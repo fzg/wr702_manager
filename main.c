@@ -25,7 +25,8 @@
 			 smode Client
 */
 
-char gV = 0, *gUser = NULL, *gPass = NULL;
+// GLOBS. YUCK.
+char gV = 0, gP = 0, *gUser = NULL, *gPass = NULL; // gV gP verbosity proxy
 extern char *gAuth, *gAddr;
 
 int usage(const char *pn) {
@@ -37,8 +38,9 @@ int work(char c, const char **v) {
 	char *it;
 
         xstrdup(&gUser, "toor");
-        xstrdup(&gPass, "root");
+        xstrdup(&gPass, "root");//oor1014");
         xstrdup(&gAddr, "192.168.0.22");
+        //goto blah;
 
 try:
       err = parse_args(c, v);
@@ -62,6 +64,7 @@ try:
 //	xfree(&gAuth);
 //	err = oMode(s, MODE_BRIDGE);
 //	s = waitForReboot();
+//      blah:
 //	err = oSurvey(&it);
 //	xfree(&it);
 end:

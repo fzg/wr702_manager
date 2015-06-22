@@ -1,6 +1,8 @@
 #ifndef _OPTS_H_
 #define _OPTS_H_
 
+#include "defs.h"
+
 #define OPT_ATTEMPT_RECOVER	1
 #define OPT_RETRY_ON_ERROR	1 << 1
 #define OPT_IGNORE_ERRORS	1 << 2
@@ -18,9 +20,14 @@ int setNPwd(char **);
 int setRandomSSID(char **);
 int setRandomPsk(char **);
 
+int askReboot(char **);
+
+int askClientList(char **);
 
 int setVerbosity(char **);
 int setOverrideDefaults(char **);
+
+int setProxy(char **);
 
 
 #endif

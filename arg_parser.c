@@ -16,14 +16,18 @@ t_arg args[] = {
 {1, 0, &setNUser, 0, "user"},
 {1, 0, &setPsk, 0, "psk"},
 {0, 0, &setRandomSSID, 0, "rssid"},
-{0, 0, &setRandomPsk, 0, "rpsk"}
-
+{0, 0, &setRandomPsk, 0, "rpsk"},
+{0, 0, &askReboot, 0, "rb"},
+{0, 0, &askClientList, 0, "lc"},
+{2, 0, &setProxy, 0, "proxy"}
 };
 
 t_default_arg defaults[] = {
 {ARG(1), 0, "192.168.0.254"},
 {ARG(2), 0, "admin"},
-{ARG(2), 1, "admin"}};
+{ARG(2), 1, "admin"},
+{ARG(12), 0, "127.0.0.1"},
+{ARG(12), 1, "8080"}};
 
 void override_default_arg(const t_arg *a, int i, char *val) {
   t_default_arg *p = &defaults[0];
@@ -114,7 +118,7 @@ int parse_arg(const char **v, int i, int *err) {
   if (aptr) for (i = 0; i < a->ops_n; ++i) xfree(&(aptr[i]));
   xfree(&aptr);
   if (a->n_rbt)
-    waitForReboot();
+    askReboot(NULL);
  // DONNNNNNNNNNNNNNNNNNNNE
 
  if (gV > 2) printf("[ParseArg]\tAte %dw\n", consumed);

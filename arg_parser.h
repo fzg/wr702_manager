@@ -1,6 +1,8 @@
 #ifndef _ARG_P_
 #define _ARG_P_
 
+#include "defs.h"
+
 //int a ajouter:
 //   retries (n; infinite := -1)
 

@@ -29,12 +29,12 @@ void xfree_n(int n, ...) {
  va_end(x);
 }
 
-void xmalloc(void **b, size_t s) {
+void *xmalloc(void **b, size_t s) {
   if (*b) xfree((char**)b);
   if (!(*b = malloc(s))) {
    perror("xmalloc");
    exit(EXIT_FAILURE);
-  }
+  } else return *b;
 }
 
 void xstrdup(char **d, const char *s) {
@@ -67,12 +67,12 @@ int max(int a, int b) {
         return (a > b)? a : b;
 }
 
-extern char     gV, *gPass, *gUser, *gOb, *gAddr, *gAuth, **gFBuf;
+extern char     gV, *gPass, *gProx, *gUser, *gOb, *gAddr, *gAuth, **gFBuf;
 
 void cleanup() {
   if (gV) { printf("[cleanup]\t..."); fflush(stdout); }
   base64_cleanup();
-  XFREE_N(&gAuth, &gAddr, &gUser, &gPass, &gOb);
+  XFREE_N(&gAuth, &gAddr, &gUser, &gPass, &gOb, &gProx);
   if (gFBuf) xfree(gFBuf);
   if (gV) puts(" done.");
   return;
