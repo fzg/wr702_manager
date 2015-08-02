@@ -30,7 +30,7 @@ char gV = 0, gP = 0, *gUser = NULL, *gPass = NULL; // gV gP verbosity proxy
 extern char *gAuth, *gAddr;
 
 int usage(const char *pn) {
-  return printf("usage: %s [args]\n\nFor args, see the top of arg_parser.c\n", pn);
+  return printf("usage: %s [args]\n\nFor args, see the top of arg_parser. Thanks.c\n", pn);
 }
 
 int work(char c, const char **v) {
