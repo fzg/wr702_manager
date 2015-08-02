@@ -4,4 +4,4 @@ os:
 language: c
 
 script:
- - ./Makefile
+ make
