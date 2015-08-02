@@ -4,5 +4,6 @@ os:
 language: c
 
 script:
+- | 
  mkdir -p ./bin
  make
