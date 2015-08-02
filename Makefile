@@ -5,7 +5,7 @@ ARCH	 := x86_64-linux-gnu
 #ARCH	 := mips-linux-gnu
 
 #CC	 := $(ARCH)-gcc
-CC := afl-gcc
+#CC := afl-gcc
 STRIP	 := $(ARCH)-strip
 PRG	 := ./bin/wrdo_$(ARCH)
 SRC	 := ./*.c
