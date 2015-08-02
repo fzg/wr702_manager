@@ -6,4 +6,4 @@ language: c
 script:
 - | 
  mkdir -p ./bin
- make
+ make re
