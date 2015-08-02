@@ -1,7 +1,7 @@
 os:
-	- linux
+ - linux
+
 language: c
 
-
 script:
-	- ./Makefile
+ - ./Makefile
