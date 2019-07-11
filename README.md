@@ -25,7 +25,7 @@ _Warning:_ using this program may result in offensive SSIDs.
 
 ## TODO
 
-Regarding the C version [python version abandonned]
+Regarding the C version [python version abandoned]
 
 x. Fix operand parsing: "-v -v -v ip -v" sould not be valid, as -v is an operator
 
